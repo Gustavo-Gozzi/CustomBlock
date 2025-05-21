@@ -15,13 +15,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const campos = camposTexto.split(",").map(c => c.trim()).filter(Boolean);
-
     if (campos.length === 0) {
-      output.value = "Informe ao menos um campo para buscar.";
+      output.value = "Informe ao menos um campo.";
       return;
     }
 
-    let ampscript = `%%[SET @campo = [${campoId}]\nSET @rows = LookupRows("${deName}", "${campoId}", @campo)\nSET @row = Row(@rows, 1)\n`;
+    let ampscript = `%%[\nSET @rows = LookupRows("${deName}", "${campoId}", ${campoId === "Email" ? "emailaddr" : "@" + campoId})\nSET @row = Row(@rows, 1)\n`;
 
     campos.forEach(field => {
       ampscript += `SET @${field} = Field(@row, "${field}")\n`;
@@ -34,10 +33,37 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     output.value = ampscript;
+
+    // Atualiza o conteúdo do bloco no editor
+    if (sdk) {
+      sdk.setContent(output.value);
+      sdk.setData({
+        deName,
+        campoId,
+        camposSelecionados: campos
+      });
+    }
   }
 
-  // Gera dinamicamente ao digitar
+  // Escuta mudanças nos campos
   [deInput, campoIdInput, camposInput].forEach(input => {
     input.addEventListener("input", generateAMPscript);
   });
+
+  // Inicializa o SDK
+  window.onload = function () {
+    contentBuilderSDK.init(function (_sdk) {
+      sdk = _sdk;
+
+      // Se já tiver dados salvos, carregar no UI
+      sdk.getData(function (data) {
+        if (data) {
+          if (data.deName) deInput.value = data.deName;
+          if (data.campoId) campoIdInput.value = data.campoId;
+          if (data.camposSelecionados) camposInput.value = data.camposSelecionados.join(", ");
+          generateAMPscript();
+        }
+      });
+    });
+  };
 });
