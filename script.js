@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    let ampscript = `%%[\nSET @rows = LookupRows("${deName}", "${campoId}", ${campoId === "Email" ? "emailaddr" : "@" + campoId})\nSET @row = Row(@rows, 1)\n`;
+    let ampscript = `%%[\nSET @campo = [${campoId}]\nSET @rows = LookupRows("${deName}", "${campoId}", @campo)\nSET @row = Row(@rows, 1)\n`;
 
     campos.forEach(field => {
       ampscript += `SET @${field} = Field(@row, "${field}")\n`;

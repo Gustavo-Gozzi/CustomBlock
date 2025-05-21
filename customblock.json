@@ -4,7 +4,7 @@
   "description": "Teste para no-code AMP",
   "repository": {
     "type": "git",
-    "url": "git@github.com:salesforce-marketingcloud/blocksdk.git"
+    "url": "https://gustavo-gozzi.github.io/CustomBlock/"
   },
   "main": "blocksdk.js",
   "author": "Gustavo Gozzi",
