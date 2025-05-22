@@ -41,3 +41,31 @@ document.addEventListener("DOMContentLoaded", function () {
     input.addEventListener("input", generateAMPscript);
   });
 });
+
+async function getValues(){
+  clientId = document.getElementById("clientId").value;
+  clientSecret = document.getElementById("clientSecret").value;
+  mid = document.getElementById("mid").value;
+  externalKey = document.getElementById("externalKey").value;
+
+  console.log(clientId, clientSecret, mid, externalKey)
+
+ const data = {                           
+    "client_id": clientId,    
+    "client_secret": clientSecret,
+    "external_key": externalKey, 
+    "mid": mid           
+  }
+
+  const response = await fetch("http://127.0.0.1:3000/dataextension", { // <-- Substitua pela sua URL
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(data)
+  })
+  
+  const json = await response.json();
+  console.log("Resposta JSON:", json); /*Talvez seja melhor colocar em uma lista!*/
+
+}
