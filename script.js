@@ -47,8 +47,12 @@ async function getValues(){
   clientSecret = document.getElementById("clientSecret").value;
   mid = document.getElementById("mid").value;
   externalKey = document.getElementById("externalKey").value;
+  const output = document.getElementById("ampscriptOut")
 
-  console.log(clientId, clientSecret, mid, externalKey)
+  if(!clientId || !clientSecret || !mid || !externalKey){
+    alert("Preencha todos os campos!!!")
+    return
+  }
 
  const data = {                           
     "client_id": clientId,    
@@ -57,7 +61,7 @@ async function getValues(){
     "mid": mid           
   }
 
-  const response = await fetch("http://127.0.0.1:3000/dataextension", { // <-- Substitua pela sua URL
+  const response = await fetch("http://127.0.0.1:3000/dataextension", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -66,6 +70,26 @@ async function getValues(){
   })
   
   const json = await response.json();
-  console.log("Resposta JSON:", json); /*Talvez seja melhor colocar em uma lista!*/
+  //console.log("Resposta JSON:", json); /*Talvez seja melhor colocar em uma lista!*/
+  ids = json.id
+  attributes = json.atributos
+
+  let amp = `%%[\n`
+  let variavel = ``
+  ids.forEach(id => {
+    amp += `SET @${id} = [${id}] \n`
+    variavel += `\n%%=v(@${id})==%%\n`
+
+  })
+
+  attributes.forEach(attribute => {
+    amp += `SET @${attribute} = [${attribute}] \n`
+    variavel += `%%=v(@${attribute})==%%\n`
+
+  })
+
+  amp += `]%%\n`
+
+  output.value = amp + variavel 
 
 }
