@@ -107,7 +107,7 @@ async function getValues(){
         "mid": mid           
     }
 
-    const response = await fetch("http://127.0.0.1:3000/dataextension", {
+    const response = await fetch("https://microsservicocustomblock.onrender.com/dataextension", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
