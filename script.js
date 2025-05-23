@@ -67,3 +67,55 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   };
 });
+
+async function getValues(){
+  clientId = document.getElementById("clientId").value;
+  clientSecret = document.getElementById("clientSecret").value;
+  mid = document.getElementById("mid").value;
+  externalKey = document.getElementById("externalKey").value;
+  const output = document.getElementById("ampscriptOut")
+
+  if(!clientId || !clientSecret || !mid || !externalKey){
+    alert("Preencha todos os campos!!!")
+    return
+  }
+
+ const data = {                           
+    "client_id": clientId,    
+    "client_secret": clientSecret,
+    "external_key": externalKey, 
+    "mid": mid           
+  }
+
+  const response = await fetch("http://127.0.0.1:3000/dataextension", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(data)
+  })
+  
+  const json = await response.json();
+  //console.log("Resposta JSON:", json); /*Talvez seja melhor colocar em uma lista!*/
+  ids = json.id
+  attributes = json.atributos
+
+  let amp = `%%[\n`
+  let variavel = ``
+  ids.forEach(id => {
+    amp += `SET @${id} = [${id}] \n`
+    variavel += `\n%%=v(@${id})==%%\n`
+
+  })
+
+  attributes.forEach(attribute => {
+    amp += `SET @${attribute} = [${attribute}] \n`
+    variavel += `%%=v(@${attribute})==%%\n`
+
+  })
+
+  amp += `]%%\n`
+
+  output.value = amp + variavel 
+
+}

@@ -1,0 +1,89 @@
+/* 
+. (ponto) -> Classe
+# (hashtag) -> Id
+*/
+
+/* Estilo base da página */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #eef2f5;
+  margin: 0;
+  padding: 20px;
+}
+
+/* Container geral */
+#block-ui,
+.container {
+  max-width: 500px;
+  margin: 30px auto;
+  padding: 25px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Títulos */
+h3 {
+  margin-top: 25px;
+  color: #333;
+  font-size: 18px;
+}
+
+/* Espaçamento entre os campos */
+.div_input {
+  margin-bottom: 15px;
+}
+
+/* Rótulos dos inputs */
+label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: bold;
+  color: #333;
+}
+
+/* Campos de texto */
+input[type="text"],
+textarea {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 15px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-sizing: border-box;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+/* Foco nos campos */
+input[type="text"]:focus,
+textarea:focus {
+  border-color: #007BFF;
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.4);
+  outline: none;
+}
+
+/* Botão de envio */
+#botaoValues {
+  width: 100%;
+  padding: 12px;
+  background-color: #007BFF;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+/* Efeito hover no botão */
+#botaoValues:hover {
+  background-color: #0056b3;
+}
+
+/* Área do AMPscript */
+#ampscript-output {
+  resize: vertical;
+  background-color: #f9f9f9;
+  font-family: Consolas, monospace;
+  color: #333;
+}
