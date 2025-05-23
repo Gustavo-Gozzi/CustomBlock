@@ -123,12 +123,12 @@ async function getValues(){
     let variavel = ``
     ids.forEach(id => {
         amp += `SET @${id} = [${id}] \n`
-        variavel += `\n%%=v(@${id})==%%\n`
+        variavel += `\n%%=v(@${id})=%%\n`
     })
 
     attributes.forEach(attribute => {
         amp += `SET @${attribute} = [${attribute}] \n`
-        variavel += `%%=v(@${attribute})==%%\n`
+        variavel += `%%=v(@${attribute})=%%\n`
     })
 
     amp += `]%%\n`
@@ -166,7 +166,7 @@ function displaySelectableAttributes() {
         
         const label = document.createElement('label');
         label.htmlFor = `attr_${index}`;
-        label.innerHTML = `<span class="attribute-code">%%=v(@${attr})==%%</span>`;
+        label.innerHTML = `<span class="attribute-code">%%=v(@${attr})=%%</span>`;
         
         item.appendChild(checkbox);
         item.appendChild(label);
@@ -214,7 +214,7 @@ function saveSelectedAttributes() {
 
     let selectedVariables = '';
     selectedAttributes.forEach(attr => {
-        selectedVariables += `%%=v(@${attr})==%%\n`;
+        selectedVariables += `%%=v(@${attr})=%%\n`;
     });
 
     const finalContent = selectedAmp + selectedVariables;
