@@ -42,54 +42,213 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
-async function getValues(){
-  clientId = document.getElementById("clientId").value;
-  clientSecret = document.getElementById("clientSecret").value;
-  mid = document.getElementById("mid").value;
-  externalKey = document.getElementById("externalKey").value;
-  const output = document.getElementById("ampscriptOut")
+// Variáveis globais existentes
+let clientId, clientSecret, mid, externalKey;
+let ids = [];
+let attributes = [];
 
-  if(!clientId || !clientSecret || !mid || !externalKey){
-    alert("Preencha todos os campos!!!")
-    return
-  }
+// Novas variáveis para SDK
+let connection;
+let selectedAttributes = [];
+let allAttributes = [];
 
- const data = {                           
-    "client_id": clientId,    
-    "client_secret": clientSecret,
-    "external_key": externalKey, 
-    "mid": mid           
-  }
+// Inicialização do SDK quando o Postmonger estiver disponível
+function initSDK() {
+    if (typeof Postmonger !== 'undefined') {
+        connection = new Postmonger.Session();
+        
+        // Configuração do SDK
+        connection.trigger('requestedInteraction', { "name": "myinteraction" });
+        
+        connection.on('initCustomContentBlock', function(data) {
+            // Carrega dados salvos anteriormente se existirem
+            if (data && data.selectedAttributes) {
+                selectedAttributes = data.selectedAttributes;
+            }
+        });
 
-  const response = await fetch("http://127.0.0.1:3000/dataextension", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(data)
-  })
-  
-  const json = await response.json();
-  //console.log("Resposta JSON:", json); /*Talvez seja melhor colocar em uma lista!*/
-  ids = json.id
-  attributes = json.atributos
+        // Configurações adicionais do SDK
+        connection.on('requestedInteractionEndpoints', function(data) {
+            // Configurações de endpoints se necessário
+        });
 
-  let amp = `%%[\n`
-  let variavel = ``
-  ids.forEach(id => {
-    amp += `SET @${id} = [${id}] \n`
-    variavel += `\n%%=v(@${id})==%%\n`
+        connection.on('requestedInteractionSave', function(data) {
+            console.log('Content Block salvo:', data);
+        });
 
-  })
-
-  attributes.forEach(attribute => {
-    amp += `SET @${attribute} = [${attribute}] \n`
-    variavel += `%%=v(@${attribute})==%%\n`
-
-  })
-
-  amp += `]%%\n`
-
-  output.value = amp + variavel 
-
+        // Inicializa o SDK
+        connection.trigger('ready');
+    } else {
+        // Tenta novamente após 100ms se Postmonger não estiver carregado
+        setTimeout(initSDK, 100);
+    }
 }
+
+// Inicializa quando a página carregar
+window.addEventListener('load', initSDK);
+
+// Função original mantida
+async function getValues(){
+    clientId = document.getElementById("clientId").value;
+    clientSecret = document.getElementById("clientSecret").value;
+    mid = document.getElementById("mid").value;
+    externalKey = document.getElementById("externalKey").value;
+    const output = document.getElementById("ampscriptOut")
+
+    if(!clientId || !clientSecret || !mid || !externalKey){
+        alert("Preencha todos os campos!!!")
+        return
+    }
+
+    const data = {                           
+        "client_id": clientId,    
+        "client_secret": clientSecret,
+        "external_key": externalKey, 
+        "mid": mid           
+    }
+
+    const response = await fetch("http://127.0.0.1:3000/dataextension", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+    })
+    
+    const json = await response.json();
+    ids = json.id
+    attributes = json.atributos
+
+    let amp = `%%[\n`
+    let variavel = ``
+    ids.forEach(id => {
+        amp += `SET @${id} = [${id}] \n`
+        variavel += `\n%%=v(@${id})==%%\n`
+    })
+
+    attributes.forEach(attribute => {
+        amp += `SET @${attribute} = [${attribute}] \n`
+        variavel += `%%=v(@${attribute})==%%\n`
+    })
+
+    amp += `]%%\n`
+    output.value = amp + variavel 
+
+    // Nova funcionalidade: mostrar atributos selecionáveis
+    displaySelectableAttributes();
+}
+
+// Nova função para exibir atributos selecionáveis
+function displaySelectableAttributes() {
+    const container = document.getElementById('attributesContainer');
+    const section = document.getElementById('attributesSection');
+    
+    // Combina IDs e atributos em um array único
+    allAttributes = [...(ids || []), ...(attributes || [])];
+    
+    container.innerHTML = '';
+    
+    if (allAttributes.length === 0) {
+        container.innerHTML = '<p>Nenhum atributo encontrado.</p>';
+        return;
+    }
+    
+    allAttributes.forEach((attr, index) => {
+        const item = document.createElement('div');
+        item.className = 'attribute-item';
+        item.onclick = () => toggleAttribute(attr, item);
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'attribute-checkbox';
+        checkbox.id = `attr_${index}`;
+        checkbox.checked = selectedAttributes.includes(attr);
+        
+        const label = document.createElement('label');
+        label.htmlFor = `attr_${index}`;
+        label.innerHTML = `<span class="attribute-code">%%=v(@${attr})==%%</span>`;
+        
+        item.appendChild(checkbox);
+        item.appendChild(label);
+        
+        if (checkbox.checked) {
+            item.classList.add('selected');
+        }
+        
+        container.appendChild(item);
+    });
+    
+    // Mostra a seção de atributos
+    section.classList.remove('hidden');
+}
+
+// Nova função para alternar seleção de atributo
+function toggleAttribute(attr, element) {
+    const checkbox = element.querySelector('input[type="checkbox"]');
+    checkbox.checked = !checkbox.checked;
+    
+    if (checkbox.checked) {
+        element.classList.add('selected');
+        if (!selectedAttributes.includes(attr)) {
+            selectedAttributes.push(attr);
+        }
+    } else {
+        element.classList.remove('selected');
+        selectedAttributes = selectedAttributes.filter(a => a !== attr);
+    }
+}
+
+// Nova função para salvar atributos selecionados
+function saveSelectedAttributes() {
+    if (selectedAttributes.length === 0) {
+        alert('Selecione pelo menos um atributo!');
+        return;
+    }
+
+    // Gera o AMPscript apenas com os atributos selecionados
+    let selectedAmp = `%%[\n`;
+    selectedAttributes.forEach(attr => {
+        selectedAmp += `SET @${attr} = [${attr}] \n`;
+    });
+    selectedAmp += `]%%\n`;
+
+    let selectedVariables = '';
+    selectedAttributes.forEach(attr => {
+        selectedVariables += `%%=v(@${attr})==%%\n`;
+    });
+
+    const finalContent = selectedAmp + selectedVariables;
+
+    // Salva no SDK se estiver disponível
+    if (connection) {
+        const contentBlockData = {
+            selectedAttributes: selectedAttributes,
+            ampScript: selectedAmp,
+            variables: selectedVariables,
+            fullContent: finalContent
+        };
+
+        connection.trigger('requestedInteraction', {
+            "name": "myinteraction",
+            "data": contentBlockData
+        });
+
+        connection.trigger('requestedInteractionSave', {
+            "content": finalContent
+        });
+    }
+
+    alert(`${selectedAttributes.length} atributo(s) selecionado(s) e salvos no Content Block!`);
+}
+
+// Configurações adicionais do SDK
+connection.on('requestedInteractionEndpoints', function(data) {
+    // Configurações de endpoints se necessário
+});
+
+connection.on('requestedInteractionSave', function(data) {
+    console.log('Content Block salvo:', data);
+});
+
+// Inicializa o SDK
+connection.trigger('ready');
