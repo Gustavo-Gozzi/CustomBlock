@@ -97,25 +97,150 @@ async function getValues(){
   
   const json = await response.json();
   //console.log("Resposta JSON:", json); /*Talvez seja melhor colocar em uma lista!*/
-  ids = json.id
-  attributes = json.atributos
+  for(item in json){
+    console.log(item)
+  }
+  function deSemJson(json){
+    console.log("Entrando função sem JSON")
+    ids = json.id
+    attributes = json.atributos
 
   let amp = `%%[\n`
   let variavel = ``
   ids.forEach(id => {
     amp += `SET @${id} = [${id}] \n`
-    variavel += `\n%%=v(@${id})==%%\n`
+    variavel += `\n%%=v(@${id})=%%\n`
 
   })
 
   attributes.forEach(attribute => {
     amp += `SET @${attribute} = [${attribute}] \n`
-    variavel += `%%=v(@${attribute})==%%\n`
+    variavel += `%%=v(@${attribute})=%%\n`
 
   })
 
   amp += `]%%\n`
 
-  output.value = amp + variavel 
+  output.value = amp + variavel
+  }
+
+function deComJsonSimples(json){
+    console.log("Entrando função com JSON simples")
+    ids = json.id
+    attributes = json.atributos
+    atrJons = json.atributojson
+    chavesAtrJsons = json.chaveatributojson
+
+  let amp = `%%[\n`
+  let variavel = ``
+  ids.forEach(id => {
+    amp += `SET @${id} = [${id}] \n`
+    variavel += `\n%%=v(@${id})=%%\n`
+
+  })
+
+  attributes.forEach(attribute => {
+    amp += `SET @${attribute} = [${attribute}] \n`
+    if(attribute != json.atributojson[0]){
+        variavel += `%%=v(@${attribute})=%%\n`
+    }
+
+  })
+
+  atrJons.forEach(atr => {
+    amp +=`SET @json = BuildRowSetFromJSON(@${atr}, '$[0]', 1)\nSET @row = Row(@json, 1)\n`
+  })
+
+  chavesAtrJsons.forEach(chave => {
+    amp +=`SET @${chave} = Field(@row, '${chave}')\n`
+    variavel += `%%=v(@${chave})=%%\n`
+  })
+
+
+  amp += `]%%\n`
+
+  output.value = amp + variavel
+
+}
+
+function deComJsonComplexo(json){
+    console.log("Entrando função com JSON Complexo")
+    ids = json.id;
+    attributes = json.atributos;
+    atrJson = json.atributojson;
+    chavesAtrJsons = json.chaveatributojson;
+    atribJsonIn = json.atributoJsonInterno;
+    chaveJsonIn = json.chavesJsonInterno;
+
+    console.log(atribJsonIn, chaveJsonIn)
+
+
+  let amp = `%%[\n`
+  let variavel = ``
+  let inside = ``
+  ids.forEach(id => {
+    amp += `SET @${id} = [${id}] \n`
+    variavel += `\n%%=v(@${id})=%%\n`
+
+  })
+
+  attributes.forEach(attribute => {
+    amp += `SET @${attribute} = [${attribute}] \n`
+    if(attribute != json.atributojson[0]){
+        variavel += `%%=v(@${attribute})=%%\n`
+    }
+
+  })
+
+  atrJson.forEach(atr => {
+    amp +=`SET @json = BuildRowSetFromJSON(@${atr}, '$[0]', 1)\nSET @row = Row(@json, 1)\n`
+  })
+
+  chavesAtrJsons.forEach(chave => {
+    amp +=`SET @${chave} = Field(@row, '${chave}')\n`
+    if(chave != json.atributoJsonInterno[0]){
+        variavel += `%%=v(@${chave})=%%\n`
+    }
+    
+  })
+
+  atribJsonIn.forEach(atrIn => {
+        console.log(atrIn)
+        amp +=`
+        SET @json${atrIn} = BuildRowSetFromJSON(@json, '$[0].${atrIn}[*]', 1)\n
+        SET @rowCount = RowCount(@json${atrIn})\n
+
+        for @i = 1 to @rowCount do\n 
+            SET @item = Row(@json${atrIn}, @i)\n`
+
+        chaveJsonIn.forEach(chaveIn => {
+            amp += `SET @${chaveIn} = Field(@item, '${chaveIn}')\n`
+
+        })
+        
+        amp += `]%%\n %%=v(@${chaveJsonIn[0]})=%% | %%=v(@${chaveJsonIn[1]})=%%\n`
+
+        amp += `%%[next @i`
+
+    })
+
+
+  amp += `]%%\n`
+
+  output.value = amp + variavel
+}
+
+    console.log(json)
+  if('atributoJsonInterno' in json && json.atributoJsonInterno.length <= 0){
+    deComJsonSimples(json)
+} 
+  else if('atributoJsonInterno' in json){
+    deComJsonComplexo(json)
+}
+  else{
+    deSemJson(json)
+}
+  
+   
 
 }
