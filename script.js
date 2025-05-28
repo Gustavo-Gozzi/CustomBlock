@@ -192,38 +192,55 @@ function deComJsonComplexo(json){
 
   })
 
-  atrJson.forEach(atr => {
-    amp +=`SET @json = BuildRowSetFromJSON(@${atr}, '$[0]', 1)\nSET @row = Row(@json, 1)\n`
-  })
-
-  chavesAtrJsons.forEach(chave => {
-    amp +=`SET @${chave} = Field(@row, '${chave}')\n`
-    if(chave != json.atributoJsonInterno[0]){
-        variavel += `%%=v(@${chave})=%%\n`
-    }
+  amp += `\n/* Extrai o primeiro item do array usando o índice [0] */\n`;
     
-  })
+    atrJson.forEach(atr => {
+        amp += `set @json = BuildRowSetFromJSON(@${atr}, '$[0]', 1)\n`;
+    });
 
-  atribJsonIn.forEach(atrIn => {
-        console.log(atrIn)
-        amp +=`SET @json${atrIn} = BuildRowSetFromJSON(@json, '$[0].${atrIn}[*]', 1)\nSET @rowCount = RowCount(@json${atrIn})\n
+    amp += `\nset @row = Row(@json, 1)\n`;
     
-        for @i = 1 to @rowCount do\n 
-        SET @item = Row(@json${atrIn}, @i)\n`
+    chavesAtrJsons.forEach(chave => {
+        amp += `set @${chave} = Field(@row, "${chave}")\n`;
+    });
 
-        chaveJsonIn.forEach(chaveIn => {
-            amp += `SET @${chaveIn} = Field(@item, '${chaveIn}')\n`
+    amp += `\n`;
 
-        })
+    atribJsonIn.forEach(atrIn => {
+        amp += `/* Extrai os ${atrIn} (que é um array de objetos) */\n`;
+        amp += `set @json${atrIn} = BuildRowSetFromJSON(@${atrJson[0]}, '$[0].${atrIn}[*]', 1)\n`;
+        amp += `set @rowCount = RowCount(@json${atrIn})\n`;
+    });
+
+    amp += `]%%\n`;
+
+    // HTML - Mostra dados
+    variavel += `<!-- Mostra dados do cliente -->\n`;
+    chavesAtrJsons.forEach(chave => {
+        if(chave != json.atributoJsonInterno[0]){
+            variavel += `<p>${chave}: %%=v(@${chave})=%%</p>\n`;
+        }
         
-        amp += `]%%\n %%=v(@${chaveJsonIn[0]})=%% | %%=v(@${chaveJsonIn[1]})=%%\n`
+    });
 
-        amp += `%%[next @i`
-
-    })
-
-
-  amp += `]%%\n`
+    // Loop dos internos
+    atribJsonIn.forEach(atrIn => {
+        amp += `%%[\nfor @i = 1 to @rowCount do\n`;
+        amp += `  set @item = Row(@json${atrIn}, @i)\n`;
+        chaveJsonIn.forEach(chaveIn => {
+            amp += `  set @${chaveIn} = Field(@item, "${chaveIn}")\n`;
+        });
+        amp += `]%%\n`;
+        amp += `<p>\n`;
+        chaveJsonIn.forEach((chaveIn, idx) => {
+            amp += `  %%=v(@${chaveIn})=%%`;
+            if (idx < chaveJsonIn.length - 1) {
+                amp += ` | `;
+            }
+        });
+        amp += `\n</p>\n`;
+        amp += `%%[next @i]%%\n`;
+    });
 
   output.value = amp + variavel
 }
