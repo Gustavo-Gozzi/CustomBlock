@@ -206,12 +206,10 @@ function deComJsonComplexo(json){
 
   atribJsonIn.forEach(atrIn => {
         console.log(atrIn)
-        amp +=`
-        SET @json${atrIn} = BuildRowSetFromJSON(@json, '$[0].${atrIn}[*]', 1)\n
-        SET @rowCount = RowCount(@json${atrIn})\n
-
+        amp +=`SET @json${atrIn} = BuildRowSetFromJSON(@json, '$[0].${atrIn}[*]', 1)\nSET @rowCount = RowCount(@json${atrIn})\n
+    
         for @i = 1 to @rowCount do\n 
-            SET @item = Row(@json${atrIn}, @i)\n`
+        SET @item = Row(@json${atrIn}, @i)\n`
 
         chaveJsonIn.forEach(chaveIn => {
             amp += `SET @${chaveIn} = Field(@item, '${chaveIn}')\n`
