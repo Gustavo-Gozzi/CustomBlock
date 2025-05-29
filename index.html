@@ -6,7 +6,6 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
     <script src="blocksdk.js"></script>
     <script>
         var sdk = new window.sfdc.BlockSDK();
@@ -58,7 +57,14 @@
     <textarea id="ampscriptOut" rows="10" cols="60" readonly></textarea>
     </div>
 </div>
-
+<div id="attributesSection" class="div_input hidden">
+            <h3>Selecione os Atributos para usar no Content Block:</h3>
+            <div id="attributesContainer" class="attributes-container">
+                <!-- Os atributos serão carregados aqui dinamicamente -->
+            </div>
+            <button id="saveButton" class="save-button" onclick="saveSelectedAttributes()">Salvar Seleção</button>
+        </div>
+    </div>
 
   <script src="script.js"></script>
 </body>
