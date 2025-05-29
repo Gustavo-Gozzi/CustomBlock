@@ -15,13 +15,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const campos = camposTexto.split(",").map(c => c.trim()).filter(Boolean);
-
     if (campos.length === 0) {
-      output.value = "Informe ao menos um campo para buscar.";
+      output.value = "Informe ao menos um campo.";
       return;
     }
 
-    let ampscript = `%%[SET @campo = [${campoId}]\nSET @rows = LookupRows("${deName}", "${campoId}", @campo)\nSET @row = Row(@rows, 1)\n`;
+    let ampscript = `%%[\nSET @campo = [${campoId}]\nSET @rows = LookupRows("${deName}", "${campoId}", @campo)\nSET @row = Row(@rows, 1)\n`;
 
     campos.forEach(field => {
       ampscript += `SET @${field} = Field(@row, "${field}")\n`;
@@ -34,221 +33,243 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     output.value = ampscript;
+
+    // Atualiza o conteúdo do bloco no editor
+    if (sdk) {
+      sdk.setContent(output.value);
+      sdk.setData({
+        deName,
+        campoId,
+        camposSelecionados: campos
+      });
+    }
   }
 
-  // Gera dinamicamente ao digitar
+  // Escuta mudanças nos campos
   [deInput, campoIdInput, camposInput].forEach(input => {
     input.addEventListener("input", generateAMPscript);
   });
+
+  // Inicializa o SDK
+  window.onload = function () {
+    contentBuilderSDK.init(function (_sdk) {
+      sdk = _sdk;
+
+      // Se já tiver dados salvos, carregar no UI
+      sdk.getData(function (data) {
+        if (data) {
+          if (data.deName) deInput.value = data.deName;
+          if (data.campoId) campoIdInput.value = data.campoId;
+          if (data.camposSelecionados) camposInput.value = data.camposSelecionados.join(", ");
+          generateAMPscript();
+        }
+      });
+    });
+  };
 });
 
-// Variáveis globais existentes
-let clientId, clientSecret, mid, externalKey;
-let ids = [];
-let attributes = [];
-
-// Novas variáveis para SDK
-let connection;
-let selectedAttributes = [];
-let allAttributes = [];
-
-// Inicialização do SDK quando o Postmonger estiver disponível
-function initSDK() {
-    if (typeof Postmonger !== 'undefined') {
-        connection = new Postmonger.Session();
-        
-        // Configuração do SDK
-        connection.trigger('requestedInteraction', { "name": "myinteraction" });
-        
-        connection.on('initCustomContentBlock', function(data) {
-            // Carrega dados salvos anteriormente se existirem
-            if (data && data.selectedAttributes) {
-                selectedAttributes = data.selectedAttributes;
-            }
-        });
-
-        // Configurações adicionais do SDK
-        connection.on('requestedInteractionEndpoints', function(data) {
-            // Configurações de endpoints se necessário
-        });
-
-        connection.on('requestedInteractionSave', function(data) {
-            console.log('Content Block salvo:', data);
-        });
-
-        // Inicializa o SDK
-        connection.trigger('ready');
-    } else {
-        // Tenta novamente após 100ms se Postmonger não estiver carregado
-        setTimeout(initSDK, 100);
-    }
-}
-
-// Inicializa quando a página carregar
-window.addEventListener('load', initSDK);
-
-// Função original mantida
 async function getValues(){
-    clientId = document.getElementById("clientId").value;
-    clientSecret = document.getElementById("clientSecret").value;
-    mid = document.getElementById("mid").value;
-    externalKey = document.getElementById("externalKey").value;
-    const output = document.getElementById("ampscriptOut")
+  clientId = document.getElementById("clientId").value;
+  clientSecret = document.getElementById("clientSecret").value;
+  mid = document.getElementById("mid").value;
+  externalKey = document.getElementById("externalKey").value;
+  const output = document.getElementById("ampscriptOut")
 
-    if(!clientId || !clientSecret || !mid || !externalKey){
-        alert("Preencha todos os campos!!!")
-        return
-    }
+  if(!clientId || !clientSecret || !mid || !externalKey){
+    alert("Preencha todos os campos!!!")
+    return
+  }
 
-    const data = {                           
-        "client_id": clientId,    
-        "client_secret": clientSecret,
-        "external_key": externalKey, 
-        "mid": mid           
-    }
+ const data = {                           
+    "client_id": clientId,    
+    "client_secret": clientSecret,
+    "external_key": externalKey, 
+    "mid": mid           
+  }
 
-    const response = await fetch("https://microsservicocustomblock.onrender.com/dataextension", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(data)
-    })
-    
-    const json = await response.json();
+  const response = await fetch("https://microsservicocustomblock.onrender.com/dataextension", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(data)
+  })
+  
+  const json = await response.json();
+  //console.log("Resposta JSON:", json); /*Talvez seja melhor colocar em uma lista!*/
+  for(item in json){
+    console.log(item)
+  }
+  function deSemJson(json){
+    console.log("Entrando função sem JSON")
     ids = json.id
     attributes = json.atributos
 
-    let amp = `%%[\n`
-    let variavel = ``
-    ids.forEach(id => {
-        amp += `SET @${id} = [${id}] \n`
-        variavel += `\n%%=v(@${id})=%%\n`
-    })
+  let amp = `%%[\n`
+  let variavel = ``
+  ids.forEach(id => {
+    amp += `SET @${id} = [${id}] \n`
+    variavel += `\n%%=v(@${id})=%%\n`
 
-    attributes.forEach(attribute => {
-        amp += `SET @${attribute} = [${attribute}] \n`
+  })
+
+  attributes.forEach(attribute => {
+    amp += `SET @${attribute} = [${attribute}] \n`
+    variavel += `%%=v(@${attribute})=%%\n`
+
+  })
+
+  amp += `]%%\n`
+
+  output.value = amp + variavel
+  }
+
+function deComJsonSimples(json){
+    console.log("Entrando função com JSON simples")
+    ids = json.id
+    attributes = json.atributos
+    atrJons = json.atributojson
+    chavesAtrJsons = json.chaveatributojson
+
+  let amp = `%%[\n`
+  let variavel = ``
+  ids.forEach(id => {
+    amp += `SET @${id} = [${id}] \n`
+    variavel += `\n%%=v(@${id})=%%\n`
+
+  })
+
+  attributes.forEach(attribute => {
+    amp += `SET @${attribute} = [${attribute}] \n`
+    if(attribute != json.atributojson[0]){
         variavel += `%%=v(@${attribute})=%%\n`
-    })
+    }
 
-    amp += `]%%\n`
-    output.value = amp + variavel 
+  })
 
-    // Nova funcionalidade: mostrar atributos selecionáveis
-    displaySelectableAttributes();
+  atrJons.forEach(atr => {
+    amp +=`SET @json = BuildRowSetFromJSON(@${atr}, '$[0]', 1)\nSET @row = Row(@json, 1)\n`
+  })
+
+  chavesAtrJsons.forEach(chave => {
+    amp +=`SET @${chave} = Field(@row, '${chave}')\n`
+    variavel += `%%=v(@${chave})=%%\n`
+  })
+
+
+  amp += `]%%\n`
+
+  output.value = amp + variavel
+
 }
 
-// Nova função para exibir atributos selecionáveis
-function displaySelectableAttributes() {
-    const container = document.getElementById('attributesContainer');
-    const section = document.getElementById('attributesSection');
-    
-    // Combina IDs e atributos em um array único
-    allAttributes = [...(ids || []), ...(attributes || [])];
-    
-    container.innerHTML = '';
-    
-    if (allAttributes.length === 0) {
-        container.innerHTML = '<p>Nenhum atributo encontrado.</p>';
-        return;
+function deComJsonComplexo(json){
+    console.log("Entrando função com JSON Complexo")
+    ids = json.id;
+    attributes = json.atributos;
+    atrJson = json.atributojson;
+    chavesAtrJsons = json.chaveatributojson;
+    atribJsonIn = json.atributoJsonInterno;
+    chaveJsonIn = json.chavesJsonInterno;
+
+    console.log(atribJsonIn, chaveJsonIn)
+
+
+  let amp = `%%[\n`
+  let variavel = ``
+  let inside = ``
+  ids.forEach(id => {
+    amp += `SET @${id} = [${id}] \n`
+    variavel += `\n%%=v(@${id})=%%\n`
+
+  })
+
+  attributes.forEach(attribute => {
+    amp += `SET @${attribute} = [${attribute}] \n`
+    if(attribute != json.atributojson[0]){
+        variavel += `%%=v(@${attribute})=%%\n`
     }
+
+  })
+
+  amp += `\n/* Extrai o primeiro item do array usando o índice [0] */\n`;
     
-    allAttributes.forEach((attr, index) => {
-        const item = document.createElement('div');
-        item.className = 'attribute-item';
-        item.onclick = () => toggleAttribute(attr, item);
-        
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.className = 'attribute-checkbox';
-        checkbox.id = `attr_${index}`;
-        checkbox.checked = selectedAttributes.includes(attr);
-        
-        const label = document.createElement('label');
-        label.htmlFor = `attr_${index}`;
-        label.innerHTML = `<span class="attribute-code">%%=v(@${attr})=%%</span>`;
-        
-        item.appendChild(checkbox);
-        item.appendChild(label);
-        
-        if (checkbox.checked) {
-            item.classList.add('selected');
+    atrJson.forEach(atr => {
+        amp += `set @json = BuildRowSetFromJSON(@${atr}, '$[0]', 1)\n`;
+    });
+
+    amp += `\nset @row = Row(@json, 1)\n`;
+    
+    chavesAtrJsons.forEach(chave => {
+        amp += `set @${chave} = Field(@row, "${chave}")\n`;
+    });
+
+    amp += `\n`;
+
+    atribJsonIn.forEach(atrIn => {
+        amp += `/* Extrai os ${atrIn} (que é um array de objetos) */\n`;
+        amp += `set @json${atrIn} = BuildRowSetFromJSON(@${atrJson[0]}, '$[0].${atrIn}[*]', 1)\n`;
+        amp += `set @rowCount = RowCount(@json${atrIn})\n`;
+    });
+
+    amp += `]%%\n`;
+
+    // HTML - Mostra dados
+    variavel += `<!-- Mostra dados do cliente -->\n`;
+    chavesAtrJsons.forEach(chave => {
+        if(chave != json.atributoJsonInterno[0]){
+            variavel += `<p>${chave}: %%=v(@${chave})=%%</p>\n`;
         }
         
-        container.appendChild(item);
-    });
-    
-    // Mostra a seção de atributos
-    section.classList.remove('hidden');
-}
-
-// Nova função para alternar seleção de atributo
-function toggleAttribute(attr, element) {
-    const checkbox = element.querySelector('input[type="checkbox"]');
-    checkbox.checked = !checkbox.checked;
-    
-    if (checkbox.checked) {
-        element.classList.add('selected');
-        if (!selectedAttributes.includes(attr)) {
-            selectedAttributes.push(attr);
-        }
-    } else {
-        element.classList.remove('selected');
-        selectedAttributes = selectedAttributes.filter(a => a !== attr);
-    }
-}
-
-// Nova função para salvar atributos selecionados
-function saveSelectedAttributes() {
-    if (selectedAttributes.length === 0) {
-        alert('Selecione pelo menos um atributo!');
-        return;
-    }
-
-    // Gera o AMPscript apenas com os atributos selecionados
-    let selectedAmp = `%%[\n`;
-    selectedAttributes.forEach(attr => {
-        selectedAmp += `SET @${attr} = [${attr}] \n`;
-    });
-    selectedAmp += `]%%\n`;
-
-    let selectedVariables = '';
-    selectedAttributes.forEach(attr => {
-        selectedVariables += `%%=v(@${attr})=%%\n`;
     });
 
-    const finalContent = selectedAmp + selectedVariables;
-
-    // Salva no SDK se estiver disponível
-    if (connection) {
-        const contentBlockData = {
-            selectedAttributes: selectedAttributes,
-            ampScript: selectedAmp,
-            variables: selectedVariables,
-            fullContent: finalContent
-        };
-
-        connection.trigger('requestedInteraction', {
-            "name": "myinteraction",
-            "data": contentBlockData
+    // Loop dos internos
+    atribJsonIn.forEach(atrIn => {
+        amp += `%%[\nfor @i = 1 to @rowCount do\n`;
+        amp += `  set @item = Row(@json${atrIn}, @i)\n`;
+        chaveJsonIn.forEach(chaveIn => {
+            amp += `  set @${chaveIn} = Field(@item, "${chaveIn}")\n`;
         });
-
-        connection.trigger('requestedInteractionSave', {
-            "content": finalContent
+        amp += `]%%\n`;
+        amp += `<p>\n`;
+        chaveJsonIn.forEach((chaveIn, idx) => {
+            amp += `  %%=v(@${chaveIn})=%%`;
+            if (idx < chaveJsonIn.length - 1) {
+                amp += ` | `;
+            }
         });
-    }
+        amp += `\n</p>\n`;
+        amp += `%%[next @i]%%\n`;
+    });
 
-    alert(`${selectedAttributes.length} atributo(s) selecionado(s) e salvos no Content Block!`);
+  output.value = amp + variavel
 }
 
-// Configurações adicionais do SDK
-connection.on('requestedInteractionEndpoints', function(data) {
-    // Configurações de endpoints se necessário
-});
+    console.log(json)
+  if('atributoJsonInterno' in json && json.atributoJsonInterno.length <= 0){
+    deComJsonSimples(json)
+} 
+  else if('atributoJsonInterno' in json){
+    deComJsonComplexo(json)
+}
+  else{
+    deSemJson(json)
+}
+  
+   
 
-connection.on('requestedInteractionSave', function(data) {
-    console.log('Content Block salvo:', data);
-});
+}
 
-// Inicializa o SDK
-connection.trigger('ready');
+function copiarTexto() {
+    // Seleciona o textarea
+    const textArea = document.getElementById("ampscriptOut");
+    
+    // Copia o conteúdo para a área de transferência
+    navigator.clipboard.writeText(textArea.value)
+        .then(() => {
+            alert("Texto copiado com sucesso!");
+        })
+        .catch(err => {
+            console.error('Erro ao copiar: ', err);
+        });
+}
