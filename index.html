@@ -21,12 +21,21 @@
         // Inicia o processo de inicialização
         initSDK();
         function salvarAmpScriptNoBlock() {
+            const clientId = document.getElementById("clientId").value;
+            const clientSecret = document.getElementById("clientSecret").value;
+            const mid = document.getElementById("mid").value;
+            const externalKey = document.getElementById("externalKey").value; 
             const ampscript = document.getElementById("ampscriptOut").value;
+
             sdk.setContent(ampscript);
             console.log("AMPscript salvo no bloco com sucesso!");
+
+            sdk.setData({
+              clientId, clientSecret, mid, externalKey, ampscript
+            })
 }
     </script>
-  <div id="block-ui">
+  <!--<div id="block-ui">
     <div class="div_input">
         <label for="de-select">Nome da Data Extension:</label>
         <input type="text" id="de-select" placeholder="Ex: ClientesVIP">
@@ -44,7 +53,7 @@
 
     <h3>AMPscript Gerado:</h3>
     <textarea id="ampscript-output" rows="10" cols="60" readonly></textarea>
-  </div>
+  </div> -->
 
 <div class="container">
     <div class="div_input">
@@ -72,14 +81,6 @@
     <textarea id="ampscriptOut" rows="10" cols="60" readonly></textarea>
     </div>
 </div>
-<div id="attributesSection" class="div_input hidden">
-            <h3>Selecione os Atributos para usar no Content Block:</h3>
-            <div id="attributesContainer" class="attributes-container">
-                <!-- Os atributos serão carregados aqui dinamicamente -->
-            </div>
-            <button id="saveButton" class="save-button" onclick="saveSelectedAttributes()">Salvar Seleção</button>
-        </div>
-    </div>
 
   <script src="script.js"></script>
 </body>
