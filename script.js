@@ -43,9 +43,6 @@ async function getValues(){
   
   const json = await response.json();
   //console.log("Resposta JSON:", json); /*Talvez seja melhor colocar em uma lista!*/
-  for(item in json){
-    console.log(item)
-  }
   function deSemJson(json){
     console.log("Entrando função sem JSON")
     ids = json.id
@@ -118,9 +115,6 @@ function deComJsonComplexo(json){
     atribJsonIn = json.atributoJsonInterno;
     chaveJsonIn = json.chavesJsonInterno;
 
-    console.log(atribJsonIn, chaveJsonIn)
-
-
   let amp = `%%[\n`
   let variavel = ``
   let inside = ``
@@ -191,7 +185,6 @@ function deComJsonComplexo(json){
   output.value = amp + variavel
 }
 
-    console.log(json)
   if('atributoJsonInterno' in json && json.atributoJsonInterno.length <= 0){
     deComJsonSimples(json)
 } 
