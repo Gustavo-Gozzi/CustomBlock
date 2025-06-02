@@ -9,8 +9,23 @@
 
     <script src="blocksdk.js"></script>
     <script>
-        var sdk = new window.sfdc.BlockSDK();
-        // do something with the sdk
+        var sdk;
+        function initSDK() {
+            if (window.sfdc && window.sfdc.BlockSDK) {
+                sdk = new window.sfdc.BlockSDK();
+                console.log('SDK inicializado com sucesso');
+            } else {
+                console.log('SDK ainda não disponível, tentando novamente...');
+                setTimeout(initSDK, 500);
+            }
+        }
+        // Inicia o processo de inicialização
+        initSDK();
+        function salvarAmpScriptNoBlock() {
+            const ampscript = document.getElementById("ampscriptOut").value;
+            sdk.setContent(ampscript);
+            console.log("AMPscript salvo no bloco com sucesso!");
+}
     </script>
   <div id="block-ui">
     <div class="div_input">
@@ -54,7 +69,7 @@
     </div>
 
     <div class="div_input">
-    <h3>AMPscript Gerado:</h3> <input type="button" value="Copy!" onclick="copiarTexto()" class="btn-copy">
+    <h3>AMPscript Gerado:</h3> <input type="button" value="Salvar!" onclick="copiarTexto()" class="btn-copy">
     <textarea id="ampscriptOut" rows="10" cols="60" readonly></textarea>
     </div>
 </div>

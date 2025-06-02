@@ -263,13 +263,12 @@ function deComJsonComplexo(json){
 function copiarTexto() {
     // Seleciona o textarea
     const textArea = document.getElementById("ampscriptOut");
-    
-    // Copia o conteúdo para a área de transferência
-    navigator.clipboard.writeText(textArea.value)
-        .then(() => {
-            alert("Texto copiado com sucesso!");
-        })
-        .catch(err => {
-            console.error('Erro ao copiar: ', err);
-        });
+    try {
+          salvarAmpScriptNoBlock();
+          console.log("Teoricamente passamos pela função")
+          alert("Texto copiado com sucesso!");
+      }
+      catch {
+          alert("Não deu")
+      }
 }
