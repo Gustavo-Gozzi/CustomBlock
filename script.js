@@ -33,7 +33,7 @@ async function getValues(){
     "mid": mid           
   }
 
-  const response = await fetch("https://microsservicocustomblock.onrender.com/dataextension", {
+  const response = await fetch("https://microsservicecustomblockgit-408137839595.southamerica-east1.run.app/dataextension", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
